@@ -30,11 +30,15 @@ class TeamsController < ApplicationController
   end
 
   def update
-    if @team.update(team_params)
-      redirect_to @team, notice: I18n.t('views.messages.update_team')
-    else
-      flash.now[:error] = I18n.t('views.messages.failed_to_save_team')
-      render :edit
+    if current_user == @team.owner
+      if @team.update(team_params)
+        redirect_to @team, notice: I18n.t('views.messages.update_team')
+      else
+        flash.now[:error] = I18n.t('views.messages.failed_to_save_team')
+        render :edit
+      end
+    else 
+      redirect_to team_path(@team.id), notice: ' ❌ Not authorized. You are not a leader ❌'
     end
   end
 
@@ -57,7 +61,6 @@ class TeamsController < ApplicationController
       old_leader.update(keep_team_id: nil)
       team.update(owner_id: member.id)
       member.update(keep_team_id: team.id)
-      TeamMailer.team_mailer(member, team.name).deliver
       
     end
     redirect_to team_path(team.id)
